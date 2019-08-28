@@ -1,16 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using System.Security.Cryptography;
-using System.Net.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Altairis.Services.PwnedPasswordsValidator {
     public class PwnedPasswordsValidator<TUser> : IPasswordValidator<TUser> where TUser : class {
         private const string ApiBaseUrl = "https://api.pwnedpasswords.com/range/";
+        private readonly ILogger logger;
+        private readonly PwnedPasswordsValidatorOptions options;
+
+        public PwnedPasswordsValidator(ILogger<PwnedPasswordsValidator<TUser>> logger = null, IOptions<PwnedPasswordsValidatorOptions> optionsAccessor = null) {
+            this.logger = logger;
+            this.options = optionsAccessor?.Value ?? new PwnedPasswordsValidatorOptions();
+        }
 
         public async Task<IdentityResult> ValidateAsync(UserManager<TUser> manager, TUser user, string password) {
             if (password == null) throw new ArgumentNullException(nameof(password));
@@ -22,7 +29,14 @@ namespace Altairis.Services.PwnedPasswordsValidator {
             var apiUrl = ApiBaseUrl + hashPrefix;
 
             // Ask PwnedPasswords for result
-            var text = await this.DownloadString(apiUrl);
+            string text;
+            try {
+                text = await this.DownloadString(apiUrl);
+            }
+            catch (WebException wex) {
+                this.logger.LogWarning(wex, "Error while downloading from {0}", apiUrl);
+                return IdentityResult.Success;
+            }
 
             // Try to find password entered by user
             var hashRest = passwordHash.Substring(5);
@@ -42,6 +56,7 @@ namespace Altairis.Services.PwnedPasswordsValidator {
             if (string.IsNullOrWhiteSpace(url)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(url));
 
             using (var hc = new System.Net.Http.HttpClient()) {
+                hc.Timeout = this.options.RequestTimeout;
                 using (var response = await hc.GetAsync(url)) {
                     response.EnsureSuccessStatusCode();
                     return await response.Content.ReadAsStringAsync();
