@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Cryptography;
 using System.Net.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Altairis.Services.PwnedPasswordsValidator {
     public class PwnedPasswordsValidator<TUser> : IPasswordValidator<TUser> where TUser : class {
@@ -21,10 +22,7 @@ namespace Altairis.Services.PwnedPasswordsValidator {
             var apiUrl = ApiBaseUrl + hashPrefix;
 
             // Ask PwnedPasswords for result
-            string text;
-            using (var wc = new System.Net.WebClient()) {
-                text = await wc.DownloadStringTaskAsync(apiUrl);
-            }
+            var text = await this.DownloadString(apiUrl);
 
             // Try to find password entered by user
             var lines = text.Split(new[] { "\r\n" }, StringSplitOptions.None);
@@ -38,6 +36,18 @@ namespace Altairis.Services.PwnedPasswordsValidator {
                     Description = "Password was found in haveibeenpwned.com password dumps."
                 })
                 : IdentityResult.Success;
+        }
+
+        private async Task<string> DownloadString(string url) {
+            if (url == null) throw new ArgumentNullException(nameof(url));
+            if (string.IsNullOrWhiteSpace(url)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(url));
+
+            using (var hc = new System.Net.Http.HttpClient()) {
+                using (var response = await hc.GetAsync(url)) {
+                    response.EnsureSuccessStatusCode();
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
         }
 
         private string ComputeHashString(string password) {
