@@ -16,7 +16,7 @@ namespace Altairis.Services.PwnedPasswordsValidator {
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(password));
 
             // Compute SHA 1 hash of password
-            var passwordHash = this.ComputeSha1(password);
+            var passwordHash = this.ComputeHashString(password);
             var hashPrefix = passwordHash.Substring(0, 5);
             var apiUrl = ApiBaseUrl + hashPrefix;
 
@@ -40,7 +40,7 @@ namespace Altairis.Services.PwnedPasswordsValidator {
                 : IdentityResult.Success;
         }
 
-        private string ComputeSha1(string password) {
+        private string ComputeHashString(string password) {
             if (password == null) throw new ArgumentNullException(nameof(password));
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", nameof(password));
 
