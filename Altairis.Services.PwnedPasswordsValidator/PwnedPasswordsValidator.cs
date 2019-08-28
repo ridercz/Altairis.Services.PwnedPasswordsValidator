@@ -51,5 +51,6 @@ namespace Altairis.Services.PwnedPasswordsValidator {
                 return string.Join(string.Empty, hashBytes.Select(x => x.ToString("X2")));
             }
         }
+
     }
 }
