@@ -25,9 +25,8 @@ namespace Altairis.Services.PwnedPasswordsValidator {
             var text = await this.DownloadString(apiUrl);
 
             // Try to find password entered by user
-            var lines = text.Split(new[] { "\r\n" }, StringSplitOptions.None);
             var hashRest = passwordHash.Substring(5);
-            var wasPwned = lines.Any(l => l.StartsWith(hashRest, StringComparison.OrdinalIgnoreCase));
+            var wasPwned = text.Contains(hashRest);
 
             // Return IdentityResult
             return wasPwned
