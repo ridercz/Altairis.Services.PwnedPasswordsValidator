@@ -20,13 +20,18 @@ services.AddDefaultIdentity<IdentityUser>()
 
 ## Configuration
 
-There is single configuration parameter and that's request timeout, which is by default 5 seconds. If the server does not respond within defined timeout, the password is allowed and error is logged.
+There are two configuration parameters:
 
-To configure the timeout, inject the `PwnedPasswordsValidatorOptions` class:
+
+* `RequestTimeout` - if the server does not respond within defined timeout (default is 5 seconds), the password is allowed and error is logged.
+* `GetLocalizedErrorMessage` - the `Func<string>` delegate that returns error message that is given to `IdentityResult` returned. Default error message is _"Password was found in haveibeenpwned.com password dumps."_ For localization scenarios, you'll most likely to load the string from resources.
+
+To configure the options, inject the `PwnedPasswordsValidatorOptions` class:
 
 ```cs
 services.Configure<PwnedPasswordsValidatorOptions>(c => {
     c.RequestTimeout = TimeSpan.FromSeconds(10);
+    c.GetLocalizedErrorMessage = () => "Your password has been pwned.";
 });
 ```
 

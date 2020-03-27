@@ -12,13 +12,16 @@ using Microsoft.Extensions.Options;
 namespace Altairis.Services.PwnedPasswordsValidator {
     public class PwnedPasswordsValidator<TUser> : IPasswordValidator<TUser> where TUser : class {
         private const string ApiBaseUrl = "https://api.pwnedpasswords.com/range/";
+        private const string ErrorCode = "PasswordIsPwned";
+        private const string DefaultUserAgentTemplate = "Altairis.Services.PwnedPasswordsValidator/{0:4} (https://github.com/ridercz/Altairis.Services.PwnedPasswordsValidator)";
+
         private readonly ILogger logger;
         private readonly PwnedPasswordsValidatorOptions options;
 
         public PwnedPasswordsValidator(ILogger<PwnedPasswordsValidator<TUser>> logger = null, IOptions<PwnedPasswordsValidatorOptions> optionsAccessor = null) {
             this.logger = logger;
             this.options = optionsAccessor?.Value ?? new PwnedPasswordsValidatorOptions();
-            this.UserAgent = $"Altairis.Services.PwnedPasswordsValidator/{Assembly.GetExecutingAssembly().GetName().Version} (https://github.com/ridercz/Altairis.Services.PwnedPasswordsValidator)";
+            this.UserAgent = string.Format(DefaultUserAgentTemplate, Assembly.GetExecutingAssembly().GetName().Version);
         }
 
         public string UserAgent { get; set; }
@@ -48,8 +51,8 @@ namespace Altairis.Services.PwnedPasswordsValidator {
             // Return IdentityResult
             return wasPwned
                 ? IdentityResult.Failed(new IdentityError {
-                    Code = "PasswordIsPwned",
-                    Description = "Password was found in haveibeenpwned.com password dumps."
+                    Code = ErrorCode,
+                    Description = this.options.GetLocalizedErrorMessage()
                 })
                 : IdentityResult.Success;
         }
