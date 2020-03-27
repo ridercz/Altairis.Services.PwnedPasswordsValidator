@@ -36,8 +36,7 @@ namespace Altairis.Services.PwnedPasswordsValidator {
             string text;
             try {
                 text = await this.DownloadString(apiUrl);
-            }
-            catch (WebException wex) {
+            } catch (WebException wex) {
                 this.logger.LogWarning(wex, "Error while downloading from {0}", apiUrl);
                 return IdentityResult.Success;
             }
